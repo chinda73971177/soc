@@ -1,0 +1,29 @@
+# Port scan detection
+alert tcp any any -> $HOME_NET any (msg:"SOC PORT SCAN DETECTED"; flags:S; threshold:type both,track by_src,count 20,seconds 5; classtype:network-scan; sid:9000001; rev:1;)
+
+# SSH brute force
+alert tcp any any -> $HOME_NET 22 (msg:"SOC SSH BRUTE FORCE"; flow:to_server; content:"SSH"; threshold:type both,track by_src,count 10,seconds 30; classtype:attempted-admin; sid:9000002; rev:1;)
+
+# HTTP login brute force
+alert http any any -> $HOME_NET any (msg:"SOC HTTP LOGIN BRUTE FORCE"; http.method; content:"POST"; http.uri; content:"/login"; threshold:type both,track by_src,count 20,seconds 60; classtype:web-application-attack; sid:9000003; rev:1;)
+
+# FTP brute force
+alert tcp any any -> $HOME_NET 21 (msg:"SOC FTP BRUTE FORCE"; flow:to_server; content:"PASS"; threshold:type both,track by_src,count 10,seconds 30; classtype:attempted-admin; sid:9000004; rev:1;)
+
+# RDP brute force
+alert tcp any any -> $HOME_NET 3389 (msg:"SOC RDP BRUTE FORCE"; flags:S; threshold:type both,track by_src,count 10,seconds 30; classtype:attempted-admin; sid:9000005; rev:1;)
+
+# ICMP flood
+alert icmp any any -> $HOME_NET any (msg:"SOC ICMP FLOOD"; threshold:type both,track by_src,count 100,seconds 10; classtype:misc-attack; sid:9000006; rev:1;)
+
+# SYN flood
+alert tcp any any -> $HOME_NET any (msg:"SOC SYN FLOOD"; flags:S,!A; threshold:type both,track by_dst,count 500,seconds 10; classtype:dos-attack; sid:9000007; rev:1;)
+
+# DNS amplification
+alert udp any 53 -> $HOME_NET any (msg:"SOC DNS AMPLIFICATION"; dsize:>512; threshold:type both,track by_src,count 50,seconds 10; classtype:dos-attack; sid:9000008; rev:1;)
+
+# Nmap OS detection
+alert tcp any any -> $HOME_NET any (msg:"SOC NMAP OS DETECTION"; flags:FPU; classtype:network-scan; sid:9000009; rev:1;)
+
+# SQL injection attempt
+alert http any any -> $HOME_NET any (msg:"SOC SQL INJECTION ATTEMPT"; http.uri; content:"UNION SELECT"; nocase; classtype:web-application-attack; sid:9000010; rev:1;)
