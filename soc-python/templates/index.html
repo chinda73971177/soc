@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>SOC Platform</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0e1a;--panel:#111827;--card:#1a2235;--border:#1e2d45;
+  --accent:#3b82f6;--green:#22c55e;--yellow:#f59e0b;--red:#ef4444;
+  --text:#e2e8f0;--muted:#64748b;--font:'Segoe UI',system-ui,sans-serif;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);min-height:100vh;display:flex}
+#sidebar{width:220px;background:var(--panel);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:0;flex-shrink:0}
+.logo{padding:20px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.logo-icon{width:32px;height:32px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff}
+.logo-text{font-size:14px;font-weight:700;letter-spacing:2px;color:var(--text)}
+nav{flex:1;padding:12px 0}
+nav a{display:flex;align-items:center;gap:10px;padding:10px 16px;color:var(--muted);text-decoration:none;font-size:13px;font-weight:500;transition:all .2s;cursor:pointer}
+nav a:hover,nav a.active{color:var(--accent);background:rgba(59,130,246,.08);border-right:2px solid var(--accent)}
+nav a .nav-icon{width:18px;text-align:center;font-size:15px}
+.sidebar-footer{padding:12px 16px;border-top:1px solid var(--border);font-size:11px;color:var(--muted)}
+#main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#topbar{background:var(--panel);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between}
+#topbar .page-title{font-size:15px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--text)}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.user-badge{background:var(--card);border:1px solid var(--border);padding:5px 12px;border-radius:6px;font-size:12px;color:var(--muted)}
+#content{flex:1;overflow-y:auto;padding:20px}
+.page{display:none}.page.active{display:block}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+.stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px}
+.stat-card .label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px}
+.stat-card .value{font-size:28px;font-weight:700;color:var(--text)}
+.stat-card .sub{font-size:11px;color:var(--muted);margin-top:4px}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:16px}
+.panel-header{padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent)}
+.panel-body{padding:16px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:8px 12px;text-align:left;color:var(--muted);font-weight:600;text-transform:uppercase;font-size:10px;letter-spacing:1px;border-bottom:1px solid var(--border)}
+td{padding:8px 12px;border-bottom:1px solid rgba(30,45,69,.5);color:var(--text)}
+tr:hover td{background:rgba(255,255,255,.02)}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+.badge-critical{background:rgba(239,68,68,.15);color:#ef4444;border:1px solid rgba(239,68,68,.3)}
+.badge-high{background:rgba(245,158,11,.15);color:#f59e0b;border:1px solid rgba(245,158,11,.3)}
+.badge-medium{background:rgba(251,191,36,.15);color:#fbbf24;border:1px solid rgba(251,191,36,.3)}
+.badge-low{background:rgba(34,197,94,.15);color:#22c55e;border:1px solid rgba(34,197,94,.3)}
+.badge-info{background:rgba(59,130,246,.15);color:#3b82f6;border:1px solid rgba(59,130,246,.3)}
+.badge-open{background:rgba(239,68,68,.15);color:#ef4444}
+.badge-closed{background:rgba(34,197,94,.15);color:#22c55e}
+.badge-up{background:rgba(34,197,94,.15);color:#22c55e}
+.badge-down{background:rgba(239,68,68,.15);color:#ef4444}
+btn,.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;border:1px solid transparent;transition:all .2s;text-transform:uppercase;letter-spacing:.5px}
+.btn-primary{background:rgba(59,130,246,.15);border-color:rgba(59,130,246,.4);color:var(--accent)}
+.btn-primary:hover{background:rgba(59,130,246,.25)}
+.btn-danger{background:rgba(239,68,68,.1);border-color:rgba(239,68,68,.3);color:#ef4444}
+.btn-danger:hover{background:rgba(239,68,68,.2)}
+.btn-success{background:rgba(34,197,94,.1);border-color:rgba(34,197,94,.3);color:#22c55e}
+.btn-success:hover{background:rgba(34,197,94,.2)}
+.btn-muted{background:var(--panel);border-color:var(--border);color:var(--muted)}
+.btn-muted:hover{color:var(--text)}
+input,select,textarea{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:6px;font-size:12px;width:100%;outline:none;font-family:inherit}
+input:focus,select:focus{border-color:var(--accent)}
+label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:4px}
+.form-group{margin-bottom:14px}
+.filters{display:grid;gap:10px;margin-bottom:14px}
+.filters-8{grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr 1fr 1fr}
+.filters-4{grid-template-columns:1fr 1fr 1fr 1fr}
+.flex{display:flex;gap:8px;align-items:center}
+.flex-between{display:flex;justify-content:space-between;align-items:center}
+.ml-auto{margin-left:auto}
+.text-muted{color:var(--muted);font-size:12px}
+.text-accent{color:var(--accent)}
+.text-green{color:var(--green)}
+.text-red{color:var(--red)}
+.text-yellow{color:var(--yellow)}
+.mono{font-family:'Courier New',monospace}
+.truncate{max-width:280px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.alert-box{padding:10px 14px;border-radius:6px;font-size:12px;margin-bottom:12px;display:none}
+.alert-success{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#22c55e}
+.alert-error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444}
+.upload-zone{border:2px dashed var(--border);border-radius:8px;padding:32px;text-align:center;cursor:pointer;transition:all .2s}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(59,130,246,.04)}
+.upload-zone input{display:none}
+.upload-icon{font-size:28px;margin-bottom:8px;color:var(--muted)}
+.toggle{position:relative;width:44px;height:24px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+.toggle-slider{position:absolute;inset:0;background:var(--border);border-radius:12px;cursor:pointer;transition:.3s}
+.toggle-slider:before{content:'';position:absolute;width:18px;height:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.3s}
+.toggle input:checked + .toggle-slider{background:var(--accent)}
+.toggle input:checked + .toggle-slider:before{transform:translateX(20px)}
+.ids-btn{flex:1;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--bg);cursor:pointer;text-align:center;transition:all .2s}
+.ids-btn.active-ids{border-color:rgba(245,158,11,.5);background:rgba(245,158,11,.08)}
+.ids-btn.active-ips{border-color:rgba(239,68,68,.5);background:rgba(239,68,68,.08)}
+.ids-btn.active-off{border-color:rgba(100,116,139,.4);background:rgba(100,116,139,.05)}
+.ids-btn .mode-label{font-size:14px;font-weight:700}
+.ids-btn .mode-desc{font-size:11px;color:var(--muted);margin-top:2px}
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-top:1px solid var(--border);font-size:12px;color:var(--muted)}
+.pag-btns button{background:var(--panel);border:1px solid var(--border);color:var(--muted);padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px}
+.pag-btns button:hover{color:var(--accent)}
+.pag-btns button:disabled{opacity:.3;cursor:default}
+#login-page{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:100}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:36px;width:360px}
+.login-logo{text-align:center;margin-bottom:28px}
+.login-logo .big-icon{width:56px;height:56px;background:var(--accent);border-radius:12px;display:inline-flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;color:#fff;margin-bottom:10px}
+.login-logo h1{font-size:18px;font-weight:700;letter-spacing:2px;color:var(--text)}
+.login-logo p{font-size:12px;color:var(--muted);margin-top:4px}
+.detail-panel{background:var(--panel);border:1px solid rgba(59,130,246,.2);border-radius:8px;padding:14px;margin-top:12px}
+.detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;font-size:11px}
+.detail-item .dk{color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+.detail-item .dv{color:var(--text);font-family:monospace;word-break:break-all}
+.port-list{display:flex;flex-wrap:wrap;gap:4px;margin-top:4px}
+.port-tag{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);color:var(--accent);padding:2px 6px;border-radius:4px;font-size:10px;font-family:monospace}
+.live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 1.5s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.section-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+</style>
+</head>
+<body>
+
+<div id="login-page">
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="big-icon">S</div>
+      <h1>SOC PLATFORM</h1>
+      <p>Security Operations Center</p>
+    </div>
+    <div class="alert-box alert-error" id="login-err">Invalid username or password</div>
+    <div class="form-group"><label>Username</label><input id="l-user" type="text" placeholder="admin" autocomplete="username"/></div>
+    <div class="form-group"><label>Password</label><input id="l-pass" type="password" placeholder="••••••••" autocomplete="current-password"/></div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;margin-top:4px" onclick="doLogin()">SIGN IN</button>
+  </div>
+</div>
+
+<div id="app" style="display:none;width:100%;display:none;flex">
+
+<div id="sidebar">
+  <div class="logo"><div class="logo-icon">S</div><div class="logo-text">SOC</div></div>
+  <nav>
+    <a onclick="nav('dashboard')" class="active" id="nav-dashboard"><span class="nav-icon">⬛</span> Dashboard</a>
+    <a onclick="nav('logs')"      id="nav-logs"><span class="nav-icon">📄</span> Log Viewer</a>
+    <a onclick="nav('alerts')"    id="nav-alerts"><span class="nav-icon">🚨</span> Alerts</a>
+    <a onclick="nav('capture')"   id="nav-capture"><span class="nav-icon">📡</span> Live Capture</a>
+    <a onclick="nav('network')"   id="nav-network"><span class="nav-icon">🌐</span> Network Scan</a>
+    <a onclick="nav('assets')"    id="nav-assets"><span class="nav-icon">🖥️</span> Assets</a>
+    <a onclick="nav('settings')"  id="nav-settings"><span class="nav-icon">⚙️</span> Settings</a>
+  </nav>
+  <div class="sidebar-footer" id="user-info">Not logged in</div>
+</div>
+
+<div id="main">
+  <div id="topbar">
+    <span class="page-title" id="page-title">Dashboard</span>
+    <div class="topbar-right">
+      <span class="user-badge" id="topbar-user">—</span>
+      <button class="btn btn-muted" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div id="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="grid-4" id="dash-stats">
+        <div class="stat-card"><div class="label">Logs Today</div><div class="value" id="ds-logs">—</div></div>
+        <div class="stat-card"><div class="label">Open Alerts</div><div class="value text-red" id="ds-alerts">—</div></div>
+        <div class="stat-card"><div class="label">Assets Online</div><div class="value text-green" id="ds-assets">—</div></div>
+        <div class="stat-card"><div class="label">Packets Captured</div><div class="value text-accent" id="ds-packets">—</div></div>
+      </div>
+      <div class="grid-2">
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">Alerts by Severity</span></div>
+          <div class="panel-body" id="dash-sev"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-header"><span class="panel-title">Logs by Type</span></div>
+          <div class="panel-body" id="dash-logtype"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Recent Alerts</span><button class="btn btn-primary" onclick="nav('alerts')">View All</button></div>
+        <div id="dash-alerts-table"></div>
+      </div>
+    </div>
+
+    <!-- LOG VIEWER -->
+    <div class="page" id="page-logs">
+      <div class="panel">
+        <div class="panel-body">
+          <div class="filters filters-8">
+            <div><label>Search</label><input id="lq-query" placeholder="keyword..."/></div>
+            <div><label>Severity</label><select id="lq-sev"><option value="">All</option><option>critical</option><option>high</option><option>medium</option><option>low</option><option>info</option></select></div>
+            <div><label>Type</label><select id="lq-type"><option value="">All</option><option>system</option><option>network</option><option>application</option><option>firewall</option></select></div>
+            <div><label>Src IP</label><input id="lq-src" placeholder="192.168.1.1"/></div>
+            <div><label>Dst IP</label><input id="lq-dst" placeholder="10.0.0.1"/></div>
+            <div><label>Protocol</label><select id="lq-proto"><option value="">All</option><option>TCP</option><option>UDP</option><option>ICMP</option></select></div>
+            <div><label>Service</label><input id="lq-svc" placeholder="ssh..."/></div>
+            <div style="display:flex;align-items:flex-end;gap:6px">
+              <button class="btn btn-primary" onclick="searchLogs(1)">Search</button>
+              <button class="btn btn-muted" onclick="resetLogs()">Reset</button>
+            </div>
+          </div>
+          <div class="flex-between" style="margin-bottom:8px">
+            <span class="text-muted" id="log-count">0 results</span>
+            <button class="btn btn-primary" onclick="toggleUpload()">⬆ Upload Log</button>
+          </div>
+          <div id="upload-zone-wrap" style="display:none;margin-bottom:12px">
+            <div class="upload-zone" id="upload-zone" onclick="document.getElementById('log-file').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
+              <div class="upload-icon">⬆</div>
+              <p style="font-size:12px;color:var(--muted)" id="upload-label">Drag & drop or click to browse (.log .txt .json .csv — max 50MB)</p>
+              <input type="file" id="log-file" accept=".log,.txt,.json,.csv" onchange="handleFileSelect(event)"/>
+            </div>
+            <div class="alert-box alert-success" id="upload-ok"></div>
+            <div class="alert-box alert-error" id="upload-err"></div>
+            <div style="margin-top:8px" id="upload-btn-wrap" style="display:none">
+              <button class="btn btn-primary" id="upload-btn" onclick="submitUpload()">Upload & Analyse</button>
+            </div>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table><thead><tr><th>Timestamp</th><th>Severity</th><th>Host</th><th>Src IP</th><th>Type</th><th>Program</th><th>Message</th></tr></thead>
+          <tbody id="log-tbody"></tbody></table>
+        </div>
+        <div class="pagination"><span id="log-page-info">Page 1</span><div class="pag-btns"><button id="log-prev" onclick="searchLogs(logPage-1)">◀</button><button id="log-next" onclick="searchLogs(logPage+1)">▶</button></div></div>
+      </div>
+      <div id="log-detail"></div>
+    </div>
+
+    <!-- ALERTS -->
+    <div class="page" id="page-alerts">
+      <div class="panel">
+        <div class="panel-body">
+          <div class="filters filters-4" style="margin-bottom:10px">
+            <div><label>Status</label><select id="aq-status"><option value="">All</option><option>open</option><option>closed</option></select></div>
+            <div><label>Severity</label><select id="aq-sev"><option value="">All</option><option>critical</option><option>high</option><option>medium</option><option>low</option><option>info</option></select></div>
+            <div style="display:flex;align-items:flex-end"><button class="btn btn-primary" onclick="searchAlerts(1)">Filter</button></div>
+            <div style="display:flex;align-items:flex-end"><span class="text-muted" id="alert-count">0 alerts</span></div>
+          </div>
+        </div>
+        <div style="overflow-x:auto">
+          <table><thead><tr><th>Time</th><th>Severity</th><th>Title</th><th>Category</th><th>Src IP</th><th>Dst IP:Port</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody id="alert-tbody"></tbody></table>
+        </div>
+        <div class="pagination"><span id="alert-page-info">Page 1</span><div class="pag-btns"><button id="alert-prev" onclick="searchAlerts(alertPage-1)">◀</button><button id="alert-next" onclick="searchAlerts(alertPage+1)">▶</button></div></div>
+      </div>
+    </div>
+
+    <!-- LIVE CAPTURE -->
+    <div class="page" id="page-capture">
+      <div class="grid-2" style="margin-bottom:16px">
+        <div class="panel">
+          <div class="panel-body">
+            <div class="section-title">Capture Control</div>
+            <div class="form-group"><label>Interface</label><input id="cap-iface" placeholder="eth0, en0, wlan0..."/></div>
+            <div class="flex" style="gap:8px;margin-top:4px">
+              <button class="btn btn-success" onclick="startCapture()">▶ Start</button>
+              <button class="btn btn-danger" onclick="stopCapture()">■ Stop</button>
+              <span id="cap-status" class="text-muted">Idle</span>
+            </div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-body">
+            <div class="section-title">Capture Stats</div>
+            <div style="font-size:13px;color:var(--text)">Packets captured: <span id="cap-count" class="text-accent">0</span></div>
+            <div style="font-size:12px;color:var(--muted);margin-top:6px">IDS rules active: <span class="text-yellow">10</span></div>
+            <div id="cap-live" style="display:none;margin-top:8px" class="flex"><div class="live-dot"></div><span style="font-size:11px;color:var(--green);margin-left:6px">CAPTURING LIVE</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Recent Packets</span>
+          <button class="btn btn-muted" onclick="loadPackets()">Refresh</button>
+        </div>
+        <div style="overflow-x:auto">
+          <table><thead><tr><th>Time</th><th>Protocol</th><th>Src IP:Port</th><th>Dst IP:Port</th><th>Length</th><th>Flags</th><th>Alert</th></tr></thead>
+          <tbody id="pkt-tbody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- NETWORK SCAN -->
+    <div class="page" id="page-network">
+      <div class="panel" style="margin-bottom:16px">
+        <div class="panel-body">
+          <div class="section-title">Network Scanner</div>
+          <div class="filters-4" style="display:grid;gap:12px;margin-bottom:12px">
+            <div><label>Target (CIDR / IP)</label><input id="sc-target" placeholder="192.168.1.0/24"/></div>
+            <div><label>Scan Type</label>
+              <select id="sc-type">
+                <option value="quick">Quick — Ping sweep</option>
+                <option value="standard" selected>Standard — Top 1000 ports</option>
+                <option value="full">Full — All 65535 ports</option>
+                <option value="vuln">Vulnerability scan</option>
+              </select>
+            </div>
+            <div style="display:flex;align-items:flex-end">
+              <button class="btn btn-primary" onclick="startScan()">▶ Scan</button>
+            </div>
+            <div style="display:flex;align-items:flex-end">
+              <span id="scan-status" class="text-muted">Idle</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Scan Results</span><button class="btn btn-muted" onclick="pollScan()">Refresh</button></div>
+        <div style="overflow-x:auto">
+          <table><thead><tr><th>IP</th><th>Hostname</th><th>Status</th><th>OS</th><th>Open Ports</th></tr></thead>
+          <tbody id="scan-tbody"></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ASSETS -->
+    <div class="page" id="page-assets">
+      <div class="grid-4" style="margin-bottom:16px">
+        <div class="stat-card"><div class="label">Total Assets</div><div class="value" id="ast-total">—</div></div>
+        <div class="stat-card"><div class="label">Online</div><div class="value text-green" id="ast-up">—</div></div>
+        <div class="stat-card"><div class="label">Offline</div><div class="value text-red" id="ast-down">—</div></div>
+        <div class="stat-card"><div class="label">Last Scan</div><div class="value text-accent" style="font-size:14px" id="ast-scan">—</div></div>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">Asset Inventory</span><button class="btn btn-primary" onclick="loadAssets()">Refresh</button></div>
+        <div style="overflow-x:auto">
+          <table><thead><tr><th>IP Address</th><th>Hostname</th><th>Status</th><th>OS</th><th>Open Ports</th><th>Last Seen</th><th>Action</th></tr></thead>
+          <tbody id="asset-tbody"></tbody></table>
+        </div>
+        <div class="pagination"><span id="asset-page-info">Page 1</span><div class="pag-btns"><button id="asset-prev" onclick="loadAssets(assetPage-1)">◀</button><button id="asset-next" onclick="loadAssets(assetPage+1)">▶</button></div></div>
+      </div>
+      <div id="asset-detail"></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div class="page" id="page-settings">
+      <div style="max-width:640px">
+        <div class="alert-box alert-success" id="set-ok"></div>
+        <div class="alert-box alert-error" id="set-err"></div>
+
+        <div class="panel" style="margin-bottom:16px">
+          <div class="panel-body">
+            <div class="section-title">Network Monitoring</div>
+            <div class="form-group"><label>Network Interface</label><input id="cfg-iface" placeholder="eth0"/></div>
+            <div class="form-group"><label>Network Range (scan target)</label><input id="cfg-range" placeholder="192.168.1.0/24"/></div>
+            <div class="form-group"><label>HOME_NET (Suricata)</label><input id="cfg-homenet" placeholder="192.168.0.0/16,10.0.0.0/8"/></div>
+            <div class="form-group"><label>Default Scan Type</label>
+              <select id="cfg-scantype">
+                <option value="quick">Quick</option><option value="standard">Standard</option>
+                <option value="full">Full</option><option value="vuln">Vulnerability</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Auto Scan Interval (minutes)</label><input id="cfg-interval" type="number" min="5" max="1440"/></div>
+            <div class="flex-between" style="margin-bottom:10px"><div><div style="font-size:13px">Enable Auto Scanning</div><div class="text-muted">Run scans on schedule</div></div><label class="toggle"><input type="checkbox" id="cfg-autoscan"/><span class="toggle-slider"></span></label></div>
+            <div class="flex-between" style="margin-bottom:10px"><div><div style="font-size:13px">Alert on New Host</div></div><label class="toggle"><input type="checkbox" id="cfg-newhost"/><span class="toggle-slider"></span></label></div>
+            <div class="flex-between" style="margin-bottom:16px"><div><div style="font-size:13px">Alert on Port Changes</div></div><label class="toggle"><input type="checkbox" id="cfg-portchg"/><span class="toggle-slider"></span></label></div>
+            <button class="btn btn-primary" onclick="saveNetConfig()">Save Network Config</button>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-bottom:16px">
+          <div class="panel-body">
+            <div class="section-title">IDS / IPS Mode</div>
+            <div class="flex" style="gap:10px;margin-bottom:12px">
+              <div class="ids-btn" id="ids-btn-ids" onclick="setIdsMode('ids')"><div class="mode-label text-yellow">IDS</div><div class="mode-desc">Detect only</div></div>
+              <div class="ids-btn" id="ids-btn-ips" onclick="setIdsMode('ips')"><div class="mode-label text-red">IPS</div><div class="mode-desc">Detect & Block</div></div>
+              <div class="ids-btn" id="ids-btn-off" onclick="setIdsMode('off')"><div class="mode-label" style="color:var(--muted)">Off</div><div class="mode-desc">Disabled</div></div>
+            </div>
+            <button class="btn btn-primary" onclick="saveNetConfig()">Apply Mode</button>
+          </div>
+        </div>
+
+        <div class="panel" style="margin-bottom:16px">
+          <div class="panel-body">
+            <div class="section-title">Telegram Notifications</div>
+            <div class="form-group"><label>Bot Token</label><input id="cfg-tg-token" type="password" placeholder="1234567890:ABCdef..."/></div>
+            <div class="form-group"><label>Chat ID</label><input id="cfg-tg-chat" placeholder="-100123456789"/></div>
+            <div class="form-group"><label>Min Severity</label><select id="cfg-tg-sev"><option>critical</option><option>high</option><option>medium</option><option>low</option></select></div>
+            <div class="flex" style="gap:8px">
+              <button class="btn btn-primary" onclick="saveTelegramConfig()">Save</button>
+              <button class="btn btn-muted" onclick="testTelegram()">Test</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-body">
+            <div class="section-title">WhatsApp Notifications (Twilio)</div>
+            <div class="form-group"><label>Account SID</label><input id="cfg-wa-sid" placeholder="ACxxxxxxxx"/></div>
+            <div class="form-group"><label>Auth Token</label><input id="cfg-wa-tok" type="password"/></div>
+            <div class="form-group"><label>From</label><input id="cfg-wa-from" placeholder="whatsapp:+14155238886"/></div>
+            <div class="form-group"><label>To</label><input id="cfg-wa-to" placeholder="whatsapp:+1234567890"/></div>
+            <div class="form-group"><label>Min Severity</label><select id="cfg-wa-sev"><option>critical</option><option>high</option><option>medium</option><option>low</option></select></div>
+            <div class="flex" style="gap:8px">
+              <button class="btn btn-primary" onclick="saveWhatsappConfig()">Save</button>
+              <button class="btn btn-muted" onclick="testWhatsapp()">Test</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+let TOKEN = '';
+let currentUser = '';
+let logPage = 1, logTotal = 0;
+let alertPage = 1, alertTotal = 0;
+let assetPage = 1, assetTotal = 0;
+let uploadFile = null;
+let capInterval = null;
+let idsMode = 'ids';
+
+const API = (path, opts = {}) => {
+  opts.headers = opts.headers || {};
+  if (TOKEN) opts.headers['Authorization'] = 'Bearer ' + TOKEN;
+  return fetch('/api' + path, opts).then(r => r.json());
+};
+
+function doLogin() {
+  const u = document.getElementById('l-user').value;
+  const p = document.getElementById('l-pass').value;
+  API('/auth/login', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({username: u, password: p})
+  }).then(d => {
+    if (d.error) { show('login-err'); return; }
+    TOKEN = d.token; currentUser = d.username;
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    document.getElementById('user-info').textContent = `${d.username} (${d.role})`;
+    document.getElementById('topbar-user').textContent = d.username;
+    loadDashboard();
+  });
+}
+
+function doLogout() {
+  API('/auth/logout', {method:'POST'}).then(() => {
+    TOKEN = ''; location.reload();
+  });
+}
+
+document.getElementById('l-pass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+function nav(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav a').forEach(a => a.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.getElementById('nav-' + page).classList.add('active');
+  const titles = {dashboard:'Dashboard',logs:'Log Viewer',alerts:'Alerts',capture:'Live Capture',network:'Network Scan',assets:'Assets',settings:'Settings'};
+  document.getElementById('page-title').textContent = titles[page] || page;
+  if (page === 'dashboard') loadDashboard();
+  if (page === 'alerts') searchAlerts(1);
+  if (page === 'assets') { loadAssets(1); loadAssetStats(); }
+  if (page === 'capture') { loadPackets(); startCapPoll(); }
+  if (page === 'settings') loadConfig();
+  if (page !== 'capture') stopCapPoll();
+}
+
+function show(id, msg) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.style.display = 'block';
+  if (msg) el.textContent = msg;
+  setTimeout(() => el.style.display = 'none', 4000);
+}
+
+function badge(sev) {
+  return `<span class="badge badge-${sev}">${sev}</span>`;
+}
+
+// DASHBOARD
+function loadDashboard() {
+  API('/dashboard/stats').then(d => {
+    document.getElementById('ds-logs').textContent = (d.logs?.total_today ?? 0).toLocaleString();
+    document.getElementById('ds-alerts').textContent = (d.alerts?.open ?? 0).toLocaleString();
+    document.getElementById('ds-assets').textContent = (d.assets?.up ?? 0).toLocaleString();
+    document.getElementById('ds-packets').textContent = (d.capture?.captured ?? 0).toLocaleString();
+
+    const sev = d.alerts?.by_severity || {};
+    document.getElementById('dash-sev').innerHTML = Object.entries(sev).map(([k,v]) =>
+      `<div class="flex-between" style="margin-bottom:6px"><span>${badge(k)}</span><span class="text-accent">${v}</span></div>`
+    ).join('') || '<span class="text-muted">No data</span>';
+
+    const types = d.logs?.by_type || {};
+    document.getElementById('dash-logtype').innerHTML = Object.entries(types).map(([k,v]) =>
+      `<div class="flex-between" style="margin-bottom:6px"><span class="text-muted">${k}</span><span class="text-accent">${v}</span></div>`
+    ).join('') || '<span class="text-muted">No data</span>';
+  });
+
+  API('/alerts?page=1&page_size=5').then(d => {
+    const tbody = d.alerts?.map(a =>
+      `<tr><td class="mono">${a.timestamp?.slice(0,19)||'-'}</td><td>${badge(a.severity)}</td><td>${a.title}</td><td>${a.src_ip||'-'}</td><td><span class="badge badge-${a.status}">${a.status}</span></td></tr>`
+    ).join('') || `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">No alerts</td></tr>`;
+    document.getElementById('dash-alerts-table').innerHTML = `<table><thead><tr><th>Time</th><th>Severity</th><th>Title</th><th>Src IP</th><th>Status</th></tr></thead><tbody>${tbody}</tbody></table>`;
+  });
+}
+
+// LOGS
+function searchLogs(p) {
+  logPage = p;
+  const params = new URLSearchParams({
+    query: document.getElementById('lq-query').value,
+    severity: document.getElementById('lq-sev').value,
+    log_type: document.getElementById('lq-type').value,
+    src_ip: document.getElementById('lq-src').value,
+    dst_ip: document.getElementById('lq-dst').value,
+    protocol: document.getElementById('lq-proto').value,
+    service: document.getElementById('lq-svc').value,
+    page: p, page_size: 50,
+  });
+  API('/logs/search?' + params).then(d => {
+    logTotal = d.total || 0;
+    document.getElementById('log-count').textContent = logTotal.toLocaleString() + ' results';
+    const totalPages = Math.ceil(logTotal / 50);
+    document.getElementById('log-page-info').textContent = `Page ${p} of ${totalPages||1}`;
+    document.getElementById('log-prev').disabled = p <= 1;
+    document.getElementById('log-next').disabled = p >= totalPages;
+    const rows = (d.logs||[]).map(l =>
+      `<tr onclick="showLogDetail(${JSON.stringify(JSON.stringify(l))})">
+        <td class="mono">${l.timestamp?.slice(0,19)||'-'}</td>
+        <td>${badge(l.severity||'info')}</td>
+        <td class="mono">${l.host_name||'-'}</td>
+        <td class="mono text-accent">${l.src_ip||'-'}</td>
+        <td>${l.log_type||'-'}</td>
+        <td>${l.program||'-'}</td>
+        <td class="truncate">${l.message||'-'}</td>
+      </tr>`).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No results</td></tr>`;
+    document.getElementById('log-tbody').innerHTML = rows;
+  });
+}
+
+function showLogDetail(json) {
+  const l = JSON.parse(json);
+  const fields = Object.entries(l).filter(([,v]) => v != null && v !== '');
+  document.getElementById('log-detail').innerHTML = `
+    <div class="detail-panel">
+      <div class="section-title">Log Detail</div>
+      <div class="detail-grid">${fields.map(([k,v]) =>
+        `<div class="detail-item"><div class="dk">${k.replace(/_/g,' ')}</div><div class="dv">${String(v).slice(0,200)}</div></div>`
+      ).join('')}</div>
+    </div>`;
+}
+
+function resetLogs() {
+  ['lq-query','lq-src','lq-dst','lq-svc'].forEach(id => document.getElementById(id).value='');
+  ['lq-sev','lq-type','lq-proto'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('log-tbody').innerHTML='';
+  document.getElementById('log-count').textContent='0 results';
+  document.getElementById('log-detail').innerHTML='';
+}
+
+function toggleUpload() {
+  const z = document.getElementById('upload-zone-wrap');
+  z.style.display = z.style.display === 'none' ? 'block' : 'none';
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('upload-zone').classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f) setUploadFile(f);
+}
+
+function handleFileSelect(e) {
+  const f = e.target.files[0];
+  if (f) setUploadFile(f);
+}
+
+function setUploadFile(f) {
+  uploadFile = f;
+  document.getElementById('upload-label').textContent = `${f.name} (${(f.size/1024).toFixed(1)} KB)`;
+  document.getElementById('upload-btn-wrap').style.display = 'block';
+}
+
+function submitUpload() {
+  if (!uploadFile) return;
+  const form = new FormData();
+  form.append('file', uploadFile);
+  fetch('/api/logs/upload', {
+    method:'POST', headers:{'Authorization':'Bearer '+TOKEN}, body: form
+  }).then(r => r.json()).then(d => {
+    if (d.error) { show('upload-err', d.error); return; }
+    show('upload-ok', `✓ ${d.filename}: ${d.indexed}/${d.total} entries indexed`);
+    uploadFile = null;
+    document.getElementById('upload-label').textContent = 'Drag & drop or click to browse';
+    document.getElementById('upload-btn-wrap').style.display = 'none';
+  });
+}
+
+// ALERTS
+function searchAlerts(p) {
+  alertPage = p;
+  const params = new URLSearchParams({
+    status: document.getElementById('aq-status').value,
+    severity: document.getElementById('aq-sev').value,
+    page: p, page_size: 50,
+  });
+  API('/alerts?' + params).then(d => {
+    alertTotal = d.total || 0;
+    document.getElementById('alert-count').textContent = alertTotal.toLocaleString() + ' alerts';
+    const totalPages = Math.ceil(alertTotal / 50);
+    document.getElementById('alert-page-info').textContent = `Page ${p} of ${totalPages||1}`;
+    document.getElementById('alert-prev').disabled = p <= 1;
+    document.getElementById('alert-next').disabled = p >= totalPages;
+    const rows = (d.alerts||[]).map(a =>
+      `<tr>
+        <td class="mono">${a.timestamp?.slice(0,19)||'-'}</td>
+        <td>${badge(a.severity)}</td>
+        <td>${a.title||'-'}</td>
+        <td>${a.category||'-'}</td>
+        <td class="mono text-accent">${a.src_ip||'-'}</td>
+        <td class="mono">${a.dst_ip||'-'}${a.dst_port?':'+a.dst_port:''}</td>
+        <td><span class="badge badge-${a.status}">${a.status}</span></td>
+        <td>
+          ${a.status==='open'
+            ? `<button class="btn btn-success" onclick="closeAlert(${a.id})">Close</button>`
+            : `<button class="btn btn-muted" onclick="openAlert(${a.id})">Reopen</button>`}
+        </td>
+      </tr>`).join('') || `<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">No alerts</td></tr>`;
+    document.getElementById('alert-tbody').innerHTML = rows;
+  });
+}
+
+function closeAlert(id) {
+  API(`/alerts/${id}/status`, {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'closed'})})
+    .then(() => searchAlerts(alertPage));
+}
+function openAlert(id) {
+  API(`/alerts/${id}/status`, {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:'open'})})
+    .then(() => searchAlerts(alertPage));
+}
+
+// LIVE CAPTURE
+function startCapture() {
+  const iface = document.getElementById('cap-iface').value;
+  API('/capture/start', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({interface:iface||undefined})})
+    .then(d => {
+      document.getElementById('cap-status').textContent = d.error || 'Running';
+      if (!d.error) document.getElementById('cap-live').style.display = 'flex';
+    });
+}
+
+function stopCapture() {
+  API('/capture/stop', {method:'POST'}).then(d => {
+    document.getElementById('cap-status').textContent = 'Stopped (' + (d.captured||0) + ' pkts)';
+    document.getElementById('cap-live').style.display = 'none';
+    loadPackets();
+  });
+}
+
+function loadPackets() {
+  API('/capture/packets?limit=100').then(pkts => {
+    const rows = pkts.map(p =>
+      `<tr>
+        <td class="mono">${p.timestamp?.slice(0,19)||'-'}</td>
+        <td>${p.protocol||'-'}</td>
+        <td class="mono">${p.src_ip||'-'}${p.src_port?':'+p.src_port:''}</td>
+        <td class="mono">${p.dst_ip||'-'}${p.dst_port?':'+p.dst_port:''}</td>
+        <td>${p.length||'-'}</td>
+        <td class="mono">${p.flags||'-'}</td>
+        <td>${p.alert_triggered ? '<span class="badge badge-high">ALERT</span>' : '<span style="color:var(--muted)">—</span>'}</td>
+      </tr>`).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">No packets</td></tr>`;
+    document.getElementById('pkt-tbody').innerHTML = rows;
+  });
+}
+
+function startCapPoll() {
+  capInterval = setInterval(() => {
+    API('/capture/status').then(d => {
+      document.getElementById('cap-count').textContent = d.captured || 0;
+      document.getElementById('cap-live').style.display = d.running ? 'flex' : 'none';
+      if (d.running) loadPackets();
+    });
+  }, 3000);
+}
+function stopCapPoll() { clearInterval(capInterval); }
+
+// NETWORK SCAN
+function startScan() {
+  const target = document.getElementById('sc-target').value;
+  const scan_type = document.getElementById('sc-type').value;
+  document.getElementById('scan-status').textContent = 'Scanning...';
+  document.getElementById('scan-status').className = 'text-yellow';
+  API('/network/scan', {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({target: target||undefined, scan_type, async: true})
+  }).then(() => pollScan());
+}
+
+function pollScan() {
+  API('/network/scan/status').then(d => {
+    if (d.running) {
+      document.getElementById('scan-status').textContent = 'Scanning...';
+      setTimeout(pollScan, 3000);
+    } else {
+      document.getElementById('scan-status').textContent = 'Done';
+      document.getElementById('scan-status').className = 'text-green';
+      if (d.last_result?.hosts) renderScanResults(d.last_result.hosts);
+    }
+  });
+}
+
+function renderScanResults(hosts) {
+  const rows = hosts.map(h => {
+    const ports = (h.open_ports||[]).map(p => `<span class="port-tag">${p.port}/${p.protocol}</span>`).join('');
+    return `<tr>
+      <td class="mono text-accent">${h.ip}</td>
+      <td>${h.hostname||'-'}</td>
+      <td><span class="badge badge-${h.status==='up'?'up':'down'}">${h.status}</span></td>
+      <td>${h.os||'-'}</td>
+      <td><div class="port-list">${ports||'<span style="color:var(--muted)">None</span>'}</div></td>
+    </tr>`;
+  }).join('') || `<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">No hosts found</td></tr>`;
+  document.getElementById('scan-tbody').innerHTML = rows;
+}
+
+// ASSETS
+function loadAssets(p) {
+  assetPage = p || 1;
+  API(`/assets?page=${assetPage}&page_size=50`).then(d => {
+    assetTotal = d.total || 0;
+    const totalPages = Math.ceil(assetTotal / 50);
+    document.getElementById('asset-page-info').textContent = `Page ${assetPage} of ${totalPages||1}`;
+    document.getElementById('asset-prev').disabled = assetPage <= 1;
+    document.getElementById('asset-next').disabled = assetPage >= totalPages;
+    const rows = (d.assets||[]).map(a => {
+      const ports = (a.open_ports||[]).slice(0,5).map(p => `<span class="port-tag">${p.port}</span>`).join('');
+      return `<tr>
+        <td class="mono text-accent">${a.ip_address}</td>
+        <td>${a.hostname||'-'}</td>
+        <td><span class="badge badge-${a.status}">${a.status}</span></td>
+        <td>${a.os_info||'-'}</td>
+        <td><div class="port-list">${ports}</div></td>
+        <td class="mono">${a.last_seen?.slice(0,19)||'-'}</td>
+        <td><button class="btn btn-danger" onclick="deleteAsset('${a.ip_address}')">Delete</button></td>
+      </tr>`;
+    }).join('') || `<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:24px">No assets</td></tr>`;
+    document.getElementById('asset-tbody').innerHTML = rows;
+  });
+}
+
+function loadAssetStats() {
+  API('/assets').then(d => {
+    document.getElementById('ast-total').textContent = d.total || 0;
+  });
+  API('/network/scan/status').then(d => {
+    document.getElementById('ast-scan').textContent = d.last_run?.slice(0,19) || 'Never';
+  });
+}
+
+function deleteAsset(ip) {
+  if (!confirm(`Delete asset ${ip}?`)) return;
+  API(`/assets/${encodeURIComponent(ip)}`, {method:'DELETE'}).then(() => loadAssets(assetPage));
+}
+
+// SETTINGS
+let cfgCache = {};
+function loadConfig() {
+  API('/config').then(d => {
+    cfgCache = d;
+    document.getElementById('cfg-iface').value = d.interface||'';
+    document.getElementById('cfg-range').value = d.network_range||'';
+    document.getElementById('cfg-homenet').value = d.home_net||'';
+    document.getElementById('cfg-scantype').value = d.scan_type||'standard';
+    document.getElementById('cfg-interval').value = d.scan_interval_minutes||15;
+    document.getElementById('cfg-autoscan').checked = !!d.auto_scan_enabled;
+    document.getElementById('cfg-newhost').checked = !!d.alert_on_new_host;
+    document.getElementById('cfg-portchg').checked = !!d.alert_on_port_change;
+    idsMode = d.ids_mode||'ids';
+    updateIdsBtns();
+  });
+}
+
+function setIdsMode(m) { idsMode = m; updateIdsBtns(); }
+function updateIdsBtns() {
+  ['ids','ips','off'].forEach(m => {
+    const btn = document.getElementById('ids-btn-'+m);
+    btn.className = 'ids-btn' + (idsMode===m ? ' active-'+m : '');
+  });
+}
+
+function saveNetConfig() {
+  const data = {
+    interface: document.getElementById('cfg-iface').value,
+    network_range: document.getElementById('cfg-range').value,
+    home_net: document.getElementById('cfg-homenet').value,
+    scan_type: document.getElementById('cfg-scantype').value,
+    scan_interval_minutes: parseInt(document.getElementById('cfg-interval').value)||15,
+    auto_scan_enabled: document.getElementById('cfg-autoscan').checked,
+    alert_on_new_host: document.getElementById('cfg-newhost').checked,
+    alert_on_port_change: document.getElementById('cfg-portchg').checked,
+    ids_mode: idsMode,
+  };
+  API('/config', {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+    .then(d => show('set-ok', 'Network configuration saved'));
+}
+
+function saveTelegramConfig() {
+  const data = {
+    telegram_token: document.getElementById('cfg-tg-token').value,
+    telegram_chat_id: document.getElementById('cfg-tg-chat').value,
+    telegram_min_severity: document.getElementById('cfg-tg-sev').value,
+  };
+  API('/config', {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+    .then(() => show('set-ok', 'Telegram configuration saved'));
+}
+
+function saveWhatsappConfig() {
+  const data = {
+    twilio_sid: document.getElementById('cfg-wa-sid').value,
+    twilio_token: document.getElementById('cfg-wa-tok').value,
+    twilio_from: document.getElementById('cfg-wa-from').value,
+    twilio_to: document.getElementById('cfg-wa-to').value,
+    whatsapp_min_severity: document.getElementById('cfg-wa-sev').value,
+  };
+  API('/config', {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+    .then(() => show('set-ok', 'WhatsApp configuration saved'));
+}
+
+function testTelegram() {
+  API('/notifications/test/telegram', {method:'POST'})
+    .then(d => show(d.error ? 'set-err' : 'set-ok', d.error || 'Telegram test sent!'));
+}
+function testWhatsapp() {
+  API('/notifications/test/whatsapp', {method:'POST'})
+    .then(d => show(d.error ? 'set-err' : 'set-ok', d.error || 'WhatsApp test sent!'));
+}
+</script>
+</body>
+</html>
